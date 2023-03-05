@@ -23,3 +23,6 @@ project about my backup plan
 - create remote repo
 - backup both encryption keys
 - use `borg_backup.sh` for daily execution on the server, for each local and remote
+
+# Alerts
+configure email alerts
