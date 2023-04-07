@@ -24,5 +24,12 @@ project about my backup plan
 - backup both encryption keys
 - use `borg_backup.sh` for daily execution on the server, for each local and remote
 
+# Clients
+## Windows
+- Use WSL Version 1 for acceptable performance on host os file systems
+```
+sudo rsync -ar -v --delete --delete-excluded -e "ssh -p 2201 -i /home/felix/.ssh/backup" --files-from=files --exclude-from=exclude / external-backups@192.168.178.91:/
+```
+
 # Alerts
 configure email alerts
