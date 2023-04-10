@@ -27,6 +27,10 @@ Borg will later use these files to create an incremental, deduplicated and compr
    Use [borg_backup.sh](borg_backup.sh)
 
 # TODO
+- prevent changes to *live-dir* for duration of borg backup(s)
+
+  maybe exit early in [client_side_backup.sh](client_side_backup.sh)
+  
 
 - Email alert when
   - files from clients are not synced regularly

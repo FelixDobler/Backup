@@ -26,7 +26,7 @@ documentation of personal backup strategy
 - Install Powershell module [BurntToast](https://github.com/Windos/BurntToast)
 
 
-# Alerts
+# TODO Alerts
 configure email alerts
 https://wiki.archlinux.org/title/Msmtp
 
