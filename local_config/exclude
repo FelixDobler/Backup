@@ -1,0 +1,16 @@
+cache*
+Cache*
+*cache
+*Cache
+node_modules
+site-packages
+.pio
+/mnt/c/Users/Felix/AppData/Local/Programs/
+/mnt/c/Users/Felix/AppData/Local/Temp
+/mnt/c/Users/Felix/Downloads/
+/mnt/c/Users/Felix/.platformio
+/mnt/c/Users/Felix/.conda
+/mnt/c/Users/Felix/.vscode
+/mnt/c/Users/Felix/.eclipse
+/mnt/c/Users/Felix/AppData/Local/JetBrains
+/mnt/c/ProgramData/Microsoft/VisualStudio/Packages

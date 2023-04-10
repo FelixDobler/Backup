@@ -1,35 +1,35 @@
 # Backup
-project about my backup plan
+documentation of personal backup strategy
 
-- use rsync with rrsync restrictions on the backup server to push data
-- use borg backup to archive the live directory locally and on a remote server with encryption
+- Clients user *rsync* to push their data into a *live directory*. Each client has only access to their own files. \
+  This should be fast because rsync only transfers changes in files.
+- These files get used to create backups with *borg* that are no acessible by the clients anymore. \
+  The Borg backups are deduplicated and compressed.
+- One backup is on the same machine as the live directory and one is at a remote place.
+- Note that the borg-backups are encrypted, so the data stays protected and the remote-server can't access it.
 
-# Rsync
-- create user for backups
-- backup location on drive with `live` subdir
-- add ssh key for every client to remote server with forced command calling `accept_client_backup.sh`
-  ```
-  command="~/execute_backup.sh HOSTNAME",restrict ssh-ed25519 PUBKEY COMMENT
-  ```
-- use cronjob on the client for daily backup
+# Process
+-  clients push their data to the live-dir daily
+-  after that the backup server creates the local- and remote borg-backup
 
-# Borg
-- create local repo
-- add ssh key to remote server with forced `borg serve` command
-  ```
-  command="borg serve --restrict-to-path PATH_TO_BORG_REPO",restrict ssh-ed25519 PUBKEY COMMENT
-  ```
-- add remote to ssh config
-- create remote repo
-- backup both encryption keys
-- use `borg_backup.sh` for daily execution on the server, for each local and remote
 
 # Clients
+
+## Linux
+- schedule execution of [client_backup](client_side_backup.sh)
+
 ## Windows
 - Use WSL Version 1 for acceptable performance on host os file systems
-```
-sudo rsync -ar -v --delete --delete-excluded -e "ssh -p 2201 -i /home/felix/.ssh/backup" --files-from=files --exclude-from=exclude / external-backups@192.168.178.91:/
-```
+- copy and adjust [backup.ps1](local_config/backup.ps1)
+- change ownership to `Administrators` and remove write permission for normal users
+- Create task in `Task Scheduler` from template
+- Install Powershell module [BurntToast](https://github.com/Windos/BurntToast)
+
 
 # Alerts
 configure email alerts
+https://wiki.archlinux.org/title/Msmtp
+
+# Remote Backup Server
+- start is allowed from 03:30 on
+- no rate-limiting required
