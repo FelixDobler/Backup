@@ -5,7 +5,6 @@
 Backup topology
 ---
 flowchart LR;
-
 classDef note stroke-dasharray: 5 5;
 
 subgraph Clients
@@ -23,10 +22,7 @@ subgraph Clients
   end
   class LinuxMobile note
   
-
-  NoteClientSync[
-    all clients use rsync\n for the file transfer
-  ]
+  NoteClientSync[all clients use rsync\n for the file transfer]
   class NoteClientSync note
   %% positioning
   NoteClientSync ~~~ LinuxServer
@@ -41,20 +37,16 @@ subgraph BackupServer
   end
   
   BorgRepo[[BorgRepo]]
-  NoteEncryption[
-    data within all borg repos is E2EE,
-    the key is present on the
-    main BackupServer only
-  ]
-  class NoteEncryption note
 end
 
 subgraph RemoteServer
   RemoteBorgRepo[[RemoteBorgRepo]]
 end
 
+NoteEncryption[data within all borg repos is E2EE,\nthe key is present on the\nmain BackupServer only]
+class NoteEncryption note
 
-
+%% ----------------
 %% links
 TaskScheduler -.-> WSL
 
@@ -65,22 +57,22 @@ Anacron -.-> C3
 SyncHub -.daily .-> BorgRepo
 SyncHub -- \ndaily --> RemoteBorgRepo
 
-%% move RBS to the bottom
-%% C3 ~~~ RemoteServer
+BorgRepo -.- NoteEncryption
+RemoteBorgRepo -.- NoteEncryption
 ```
 
 This project contains all the code and documentation of my backup solution for future reference.
 
-- Clients use _rsync_ to push their data into a _sync hub_. Each client can only access their own directory within the sync hub
+- Clients use [rsync](https://rsync.samba.org/) to push their data into a _sync hub_. Each client can only access their own directory within the sync hub
   - rsync only transfers file diffs
-- These files get used to create backups with _borg_ that are no acessible by the clients anymore.
+- These files get used to create backups with [Borg](https://borgbackup.readthedocs.io/en/stable/) that are not acessible by the clients
   - Borg backups are deduplicated and compressed
 - One backup of the sync hub is on each the local and remote backup server
-- Note that the borg-backups are encrypted, so the data stays protected and the remote-server can't access it.
+- Note that the borg-backups are encrypted, so the data stays protected and the remote-server can't access it
 
 # Process
-- clients push their data to the live-dir daily
-- afterwards the backup server creates the local- and remote borg-backup
+- clients push their data to the live-dir
+- backup server creates the local- and remote borg-backup afterwards
 
 # Retention Policy
 Keep the following backups: (might be expanded when disk usage is assessable)
@@ -94,7 +86,7 @@ There are 3 main components to this strategy:
 - trusts Backup Server with confidentiality and availability
   - can only write to own *sync dir* through forced ssh command -> no danger to other clients backups
   - can only modify *sync dir* and not the backups in borg repositories -> safe from malicious deletion of backups
-  - data is not pulled by the backup server, so no access has to be granted in that direction
+  - data is not pulled by the backup server, so no access has to be granted on the clients
 ### Backup Server
 - clients need to keep the data inside the sync hub up-to-date
   - clients have forced ssh commands -> only rsync access to their sync dir
@@ -115,8 +107,8 @@ There are 3 main components to this strategy:
 
 # TODO
 ## Alerts
-configure email alerts for missing client side backups or failed borg backups
-https://wiki.archlinux.org/title/Msmtp
+configure email alerts for missing client side backups or failed borg backups\
+IDEA: https://wiki.archlinux.org/title/Msmtp
 
 ## Fix Toast Notifications
 
