@@ -1,13 +1,11 @@
 #!/bin/sh
-# script is from official borg documentation
+# script is modified from the official borg documentation
 
-# Setting this, so the repo does not need to be given on the commandline:
+# Paths of the available repositories (path needs to be provided in command):
+# local /backups/borg-repo
+# remote backup:/mnt/felix-backup/borg-repo
 
-# local
-# export BORG_REPO=/borg-repo
-
-# remote
-export BORG_REPO=ssh://backup/~/borg-repo
+export BORG_REPO=$1
 
 # See the section "Passphrase notes" for more infos.
 export BORG_PASSPHRASE=''

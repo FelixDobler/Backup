@@ -10,16 +10,14 @@
 
 # SSH
 - create `~/.ssh/authorized_keys`
-- use *forced command* so only borg is allowed
+- use *forced command* so only borg is allowed to run
   ```
   command="borg serve --restrict-to-path PATH_TO_BORG_REPO",restrict ssh-ed25519 PUBKEY COMMENT
   ```
 
 # Borg
 - Initialize repository from first backup server using `keyfile` as encryption method
-- ⚠️Backup the encryption key ⚠️
+- **⚠️Store the encryption key at a safe place⚠️**
 
 # TODO
-
-- Email alert when no daily backup is uploaded
-- let USB-Drive spin down after a few minutes to decrease power consumption and noise
+- Email alert when no daily backup is created by the main backup server

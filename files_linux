@@ -1,3 +1,5 @@
+# Generic locations on linux machines that should always be backed up
+
 /etc
 /home
 /root

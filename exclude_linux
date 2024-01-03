@@ -1,1 +1,4 @@
+# Exclude these directories:
+
+# don't back up dockers volumes
 /var/lib/docker/overlay2
