@@ -101,9 +101,9 @@ There are 3 main components to this strategy:
 # Clients
 
 ### Linux Server
-- schedule execution of [client backup script](linux_client_backup.sh) and adjust files, excludes
+- schedule execution of [client backup script](clients/linux/linux_client_backup.sh) and adjust files, excludes
 
-### [Windows](windows_client/readme.md)
+### [Windows](clients/windows/readme.md)
 
 # TODO
 ## Alerts
