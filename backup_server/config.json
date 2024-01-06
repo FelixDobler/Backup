@@ -1,0 +1,15 @@
+{
+    "backupDir": "/backups",
+    "email": "felix.dobler.fd@gmail.com",
+    "clients": {
+        "odroidm1": {
+            "alertThresholdAge": "1 day"
+        },
+        "pi4": {
+            "alertThresholdAge": "1 day"
+        },
+        "homeDesktop": {
+            "alertThresholdAge": "5 days"
+        }
+    }
+}
