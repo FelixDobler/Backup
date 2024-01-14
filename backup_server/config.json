@@ -1,0 +1,6 @@
+{
+    "remote": {
+        "borgPath": "",
+        "alertMissingBackupThreshold": "1 day"
+    }
+}
