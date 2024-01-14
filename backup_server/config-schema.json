@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "email": {
+            "description": "Email recipient for the alerts",
+            "type": "string"
+        },
+        "clients": {
+            "type": "object",
+            "properties": {
+                
+            }
+        }
+    }
+}

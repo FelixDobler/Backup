@@ -1,6 +1,20 @@
 {
+    "$schema": "./config-schema.json",
+    "backupDir": "/backups",
+    "email": "felix.dobler.fd@gmail.com",
     "remote": {
         "borgPath": "",
         "alertMissingBackupThreshold": "1 day"
+    },
+    "clients": {
+        "odroidm1": {
+            "alertThresholdAge": "1 day"
+        },
+        "pi4": {
+            "alertThresholdAge": "1 day"
+        },
+        "homeDesktop": {
+            "alertThresholdAge": "5 days"
+        }
     }
 }
