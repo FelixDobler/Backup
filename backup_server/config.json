@@ -1,6 +1,7 @@
 {
     "$schema": "./config-schema.json",
     "backupDir": "/backups",
+    "logDir": "/root/backup_logs",
     "email": "felix.dobler.fd@gmail.com",
     "clients": {
         "odroidm1": {

@@ -1,8 +1,12 @@
 #!/bin/bash
-
+configPath="$1"
 read_config () {
-    jq -r $1 config.json
+    jq -r "$1" "$configPath"
 }
+log_path="$(read_config ".logDir")/check_client_$(date -Iminutes).log"
+
+# redirect stdout to logfile and stderr to stdout
+exec 2>&1 >$log_path
 
 backup_dir=$(read_config ".backupDir")
 alert_email=$(read_config ".email")
@@ -14,6 +18,7 @@ alert_msg_header="Subject: BACKUP ALERT"
 # TODO iterate over all hostname in config.json instead
 for file in $backup_dir/*_lastBackup; do
     hostname=$(basename "$file" "_lastBackup")
+    echo "Checking $hostname"
 
     # Get the last modified timestamp
     last_modified=$(stat -c %Y "$file")
