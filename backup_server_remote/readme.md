@@ -18,6 +18,3 @@
 # Borg
 - Initialize repository from first backup server using `keyfile` as encryption method
 - **⚠️Store the encryption key at a safe place⚠️**
-
-# TODO
-- Email alert when no daily backup is created by the main backup server

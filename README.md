@@ -110,8 +110,6 @@ There are 3 main components to this strategy:
 configure email alerts for missing client side backups or failed borg backups\
 IDEA: https://wiki.archlinux.org/title/Msmtp
 
-## Fix Toast Notifications
-
 # Remote Backup Server
 - start is scheduled from 03:30am onwards
 - no rate-limiting required
