@@ -23,3 +23,9 @@ Borg will later use these files to create an incremental, deduplicated and compr
 - Initialize local and remote repository using `keyfile` as encryption method
 - **⚠️Store the encryption key at a safe place⚠️**
 - setup daily cron job for `root` user to [create a backup](borg_backup.sh) of the data in the *Sync-Directory* for **both local and remote repo**
+
+# Mail
+- `apt install msmtp msmtp-mta`
+- `msmtp-mta` sets msmtp as `sendmail` so it can be used for cron mails
+- Create `~/.msmtprc` or system wide `/etc/msmtprc` with the contents of `.msmtprc`
+- Set desired aliases in `/etc/aliases`

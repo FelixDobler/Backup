@@ -105,10 +105,6 @@ There are 3 main components to this strategy:
 
 ### [Windows](clients/windows/readme.md)
 
-# TODO
-## Alerts
-configure email alerts for missing client side backups or failed borg backups\
-IDEA: https://wiki.archlinux.org/title/Msmtp
 
 # Remote Backup Server
 - start is scheduled from 03:30am onwards
