@@ -29,3 +29,6 @@ Borg will later use these files to create an incremental, deduplicated and compr
 - `msmtp-mta` sets msmtp as `sendmail` so it can be used for cron mails
 - Create `~/.msmtprc` or system wide `/etc/msmtprc` with the contents of `.msmtprc`
 - Set desired aliases in `/etc/aliases`
+
+# Config
+The [config](config.json) is located at `/etc/FDBackup/config.json` with `744` permissions so other users can only read from the config.

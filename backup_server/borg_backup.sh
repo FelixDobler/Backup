@@ -4,8 +4,13 @@
 # Paths of the available repositories (path needs to be provided in command):
 # local /backups/borg-repo
 # remote backup:/mnt/felix-backup/borg-repo
-configPath=$(dirname $0)/config.json
-alert_email=$(jq -r ".email" "$configPath")
+
+configPath=/etc/FDBackup/config.json
+read_config () {
+    jq -r "$1" "$configPath"
+}
+
+alert_email=$(read_config ".email")
 export BORG_REPO=$1
 
 # See the section "Passphrase notes" for more infos.
@@ -32,16 +37,13 @@ borg create                         \
     --exclude 'var/tmp/*'           \
                                     \
     ::'combined-{now}'              \
-    /backups/live
+    $syncDir
 
 backup_exit=$?
 
 info "Pruning repository"
 
-# Use the `prune` subcommand to maintain 7 daily, 4 weekly and 6 monthly
-# archives of THIS machine. The '{hostname}-*' matching is very important to
-# limit prune's operation to this machine's archives and not apply to
-# other machines' archives also:
+# Use the `prune` subcommand to maintain 7 daily, 4 weekly and 6 monthly archives.
 
 borg prune                          \
     --list                          \
