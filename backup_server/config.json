@@ -15,5 +15,9 @@
         "homeDesktop": {
             "alertThresholdAge": "5 days"
         }
+    },
+    "nextcloud": {
+        "backupDir": "/backups/live/nextcloud",
+        "dockerMountDir": "/nextcloud"
     }
 }
