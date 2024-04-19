@@ -55,17 +55,32 @@ borg prune                          \
 
 prune_exit=$?
 
+
+# actually free repo disk space by compacting segments
+
+info "Compacting repository"
+
+borg compact
+
+compact_exit=$?
+
+
+
+
+
 # use highest exit code as global exit code
 global_exit=$(( backup_exit > prune_exit ? backup_exit : prune_exit ))
+global_exit=$(( compact_exit > global_exit ? compact_exit : global_exit ))
+
 
 if [ ${global_exit} -eq 0 ]; then
-    info "Backup and Prune finished successfully"
+    info "Backup, Prune, and Compact finished successfully"
 elif [ ${global_exit} -eq 1 ]; then
-    info "Backup and/or Prune finished with warnings"
-    printf "Subject: Backup Warning\n\nBackup and/or Prune finished with warnings:\n\tRepository: $1\n\tExit Code: $global_exit" | msmtp $alert_email
+    info "Backup, Prune and/or Compact finished with warnings"
+    printf "Subject: Backup Warning\n\nBackup, Prune and/or Compact finished with warnings:\n\tRepository: $1\n\tExit Code: $global_exit" | msmtp $alert_email
 else
-    info "Backup and/or Prune finished with errors"
-    printf "Subject: Backup Error\n\nBackup and/or Prune finished with errors:\n\tRepository: $1\n\tExit Code: $global_exit" | msmtp $alert_email
+    info "Backup, Prune and/or Compact finished with errors"
+    printf "Subject: Backup Error\n\nBackup, Prune and/or Compact finished with errors:\n\tRepository: $1\n\tExit Code: $global_exit" | msmtp $alert_email
 fi
 
 exit ${global_exit}

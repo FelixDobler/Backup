@@ -65,7 +65,7 @@ This project contains all the code and documentation of my backup solution for f
 
 - Clients use [rsync](https://rsync.samba.org/) to push their data into a _sync hub_. Each client can only access their own directory within the sync hub
   - rsync only transfers file diffs
-- These files get used to create backups with [Borg](https://borgbackup.readthedocs.io/en/stable/) that are not acessible by the clients
+- These files get used to create backups with [Borg](https://borgbackup.readthedocs.io/en/stable/) (version 1.2.8 installed as binary) that are not acessible by the clients
   - Borg backups are deduplicated and compressed
 - One backup of the sync hub is on each the local and remote backup server
 - Note that the borg-backups are encrypted, so the data stays protected and the remote-server can't access it
