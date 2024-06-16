@@ -5,6 +5,7 @@
     "logDir": "/root/backup_logs",
     "logDirIncoming": "/home/external-backups/logs",
     "email": "felix.dobler.fd@gmail.com",
+    "uptimeKumaPushUrl": "https://REDACTED",
     "clients": {
         "odroidm1": {
             "alertThresholdAge": "1 day"

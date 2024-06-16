@@ -10,6 +10,7 @@ exec 2>&1 >$log_path
 
 backup_dir=$(read_config ".backupDir")
 alert_email=$(read_config ".email")
+uptime_kuma_push_url=$(read_config ".uptimeKumaPushUrl")
 
 # the file modification date of the `HOSTNAME_lastBackup` shows the timestamp of the last client sync and can be used to detect problems with the backups
 send_alert=0
@@ -49,6 +50,9 @@ done
 if [ $send_alert -gt 0 ]; then
     printf "$alert_msg_header\n\n$alert_msg" | msmtp $alert_email
     echo "Sent alert"
+else
+    echo "No alert needed, calling uptime kuma"
+    curl -s -o /dev/null "$uptime_kuma_push_url" && echo "Confirmation sent to uptime kuma" || echo "Failed to send confirmation to uptime kuma"
 fi
 
 echo "Check finished"
