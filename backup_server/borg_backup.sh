@@ -11,6 +11,7 @@ read_config () {
 }
 
 alert_email=$(read_config ".email")
+syncDir=$(read_config ".syncDir")
 export BORG_REPO=$1
 
 # See the section "Passphrase notes" for more infos.
