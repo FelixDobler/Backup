@@ -1,0 +1,28 @@
+{
+    "logDir": "/root/backup_logs",
+    "email": "felix.dobler.fd@gmail.com",
+    "rsyncTargetHost": "backup:",
+    "components": {
+        "os": {
+            "enabled": true,
+            "script": "rsync_backup.sh",
+            "source": "/",
+            "files": "files_linux",
+            "excludeFile": "exclude",
+            "dstRelativePath": "rootfs"
+        },
+        "nextcloud": {
+            "enabled": true,
+            "tmpBackupDir": "/backups/tmp/nextcloud",
+            "dockerMountDir": "/nextcloud",
+            "script": "nextcloud_backup.sh",
+            "dstRelativePath": "nextcloud"
+        },
+        "abc": {
+            "enabled": false,
+            "source": "/doesntexist",
+            "dstRelativePath": "abc",
+            "script": ""
+        }
+    }
+}

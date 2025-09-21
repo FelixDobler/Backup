@@ -1,0 +1,125 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+        "logDir": {
+            "description": "Root directory of all log files",
+            "type": "string"
+        },
+        "email": {
+            "description": "Email recipient for alerts",
+            "type": "string"
+        },
+        "rsyncTargetHost": {
+            "type": "string",
+            "anyOf": [
+                {"type": "string", "description": "Target Host as specified in ssh config", "pattern": "^[a-zA-Z0-9\\-_]+:"},
+                {"const": "", "description": "Empty Target Host, indicating same host"}
+            ]
+        },
+        "components": {
+            "type": "object",
+            "description": "Configuration of components to back up",
+            "properties": {
+                "os": {
+                    "$ref": "#/definitions/osItemSchema"
+                },
+                "nextcloud": {
+                    "$ref": "#/definitions/nextcloudItemSchema"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/definitions/rsyncItemSchema"
+            }
+        }
+    },
+    "additionalProperties": false,
+    "required": ["email", "rsyncTargetHost", "components"],
+    "definitions": {
+        "osItemSchema": {
+            "type": "object",
+            "additionalItems": false,
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "script": {
+                    "type": "string",
+                    "const": "rsync_backup.sh"
+                },
+                "excludeFile": {
+                    "type": "string",
+                    "default": "exclude"
+                },
+                "files": {
+                    "type": "string",
+                    "default": "files_linux"
+                },
+                "source": {
+                    "type": "string",
+                    "default": "/"
+                },
+                "dstRelativePath": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "required": [
+                "enabled"
+            ]
+        },
+        "rsyncItemSchema": {
+            "type": "object",
+            "additionalItems": false,
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "dstRelativePath": {
+                    "type": "string"
+                },
+                "script": {
+                    "type": "string",
+                    "oneOf": [
+                        {"pattern": "^[a-zA-Z0-9\\-_\\.]+$", 
+                        "description": "File path of the backup script relative to component folder"},
+                        {"const": "", 
+                        "descripton": "Empty file path, using default rsync_backup.sh script"}
+                    ]
+                }
+            },
+            "required": ["enabled", "source", "dstRelativePath"]
+        },
+        "nextcloudItemSchema": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "tmpBackupDir": {
+                    "description": "Directory for temporary files created during the Nextcloud backup",
+                    "type": "string"
+                },
+                "dockerMountDir": {
+                    "description": "Directory where the Nextcloud data from the docker container is mounted to the host",
+                    "type": "string"
+                },
+                "dstRelativePath": {
+                    "type": "string",
+                    "default": "nextcloud"
+                },
+                "script": {"const": "nextcloud_backup.sh"}
+            },
+            "required": [
+                "tmpBackupDir",
+                "dockerMountDir",
+                "script",
+                "dstRelativePath"
+            ]
+        }
+    }
+}
