@@ -1,0 +1,16 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "client/config.json"
+            ],
+            "url": "./client/config-schema.json"
+        },
+        {
+            "fileMatch": [
+                "backup_server/config.json"
+            ],
+            "url": "./backup_server/config-schema.json"
+        }   
+    ]
+}
