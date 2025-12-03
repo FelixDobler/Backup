@@ -1,24 +1,18 @@
 {
     "$schema": "./config-schema.json",
-    "backupDir": "/backups",
-    "syncDir": "/backups/live",
+    "backupDir": "/backup",
+    "syncDir": "/backup/live",
+    "lastSyncDir": "/backup/last_sync",
     "logDir": "/root/backup_logs",
-    "logDirIncoming": "/home/external-backups/logs",
+    "logDirIncoming": "/home/remote-backup/logs",
     "email": "felix.dobler.fd@gmail.com",
     "uptimeKumaPushUrl": "https://REDACTED",
     "clients": {
-        "odroidm1": {
+        "odin": {
             "alertThresholdAge": "1 day"
         },
         "pi4": {
             "alertThresholdAge": "1 day"
-        },
-        "homeDesktop": {
-            "alertThresholdAge": "5 days"
         }
-    },
-    "nextcloud": {
-        "backupDir": "/backups/live/nextcloud",
-        "dockerMountDir": "/nextcloud"
     }
 }

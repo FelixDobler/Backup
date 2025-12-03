@@ -9,8 +9,8 @@ read_config () {
 }
 
 client_name=$1
-backup_dir=$(read_config ".backupDir")
 sync_dir=$(read_config ".syncDir")
+last_sync_dir=$(read_config ".lastSyncDir")
 log_dir=$(read_config ".logDirIncoming")
 alert_email=$(read_config ".email")
 
@@ -25,4 +25,4 @@ trap "echo 'Error receiving sync from client' >&2 ; exit 1" ERR
 /usr/bin/rrsync -wo $sync_dir/$client_name
 
 # modification date shows the timestamp of the last client sync
-touch $backup_dir/${client_name}_lastBackup
+touch $last_sync_dir/${client_name}_lastBackup

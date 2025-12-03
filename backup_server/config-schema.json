@@ -48,19 +48,6 @@
                 }
             },
             "additionalProperties": true
-        },
-        "nextcloud": {
-            "type": "object",
-            "properties": {
-                "backupDir": {
-                    "description": "Root directory of all files related to the Nextcloud backup",
-                    "type": "string"
-                },
-                "dockerMountDir": {
-                    "description": "Directory where the Nextcloud data from the docker container is mounted to the host",
-                    "type": "string"
-                }
-            }
         }
     }
 }
