@@ -48,13 +48,27 @@
                     "type": "string",
                     "const": "rsync_backup.sh"
                 },
-                "excludeFile": {
-                    "type": "string",
-                    "default": "exclude"
+                "useDefaultFiles": {
+                    "type": "boolean",
+                    "default": true
                 },
-                "files": {
-                    "type": "string",
-                    "default": "files_linux"
+                "useDefaultExcludes": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "additionalExcludes": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "additionalFiles": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "source": {
                     "type": "string",

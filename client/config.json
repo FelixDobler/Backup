@@ -4,12 +4,15 @@
     "rsyncTargetHost": "backup:",
     "components": {
         "os": {
-            "enabled": true,
+            "enabled": false,
             "script": "rsync_backup.sh",
             "source": "/",
+            "useDefaultFiles": true,
+            "useDefaultExcludes": true,
             "files": "files_linux",
             "excludeFile": "exclude",
-            "dstRelativePath": "rootfs"
+            "dstRelativePath": "rootfs",
+            "additionalFiles": ["/etc/hosts", "/etc/fstab"]
         },
         "nextcloud": {
             "enabled": true,
