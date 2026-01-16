@@ -1,0 +1,7 @@
+services:
+  nextcloud:
+    image: debian:latest
+    command: ["sleep", "60000"]
+  postgres:
+    image: debian:latest
+    command: ["sleep", "60000"]

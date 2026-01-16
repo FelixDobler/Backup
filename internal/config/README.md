@@ -1,0 +1,1 @@
+package for go config parsing

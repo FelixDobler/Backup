@@ -1,0 +1,31 @@
+logDir: "/root/backup_logs"
+email: "felix.dobler.fd@gmail.com"
+# rsyncTargetHost: "test123:"
+rsyncTargetHost: ""
+components:
+  - name: "nextcloud"
+    type: "nextcloud"
+    enabled: true
+    composeSpecificationPath: "docker-compose.yaml"
+    composeNextcloudServiceName: "nextcloud"
+    composeDatabaseServiceName: "postgres"
+    tmpBackupDir: "/backups/tmp/nextcloud"
+    dockerMountDir: "/nextcloud-data"
+    dstRelativePath: "/backupDirOnRemote/nextcloud"
+
+  # - name: "DebianOS"
+  #   type: "os"
+  #   enabled: true
+  #   source: "/"
+  #   dstRelativePath: "rootfs"
+  #   useDefaultFiles: true
+  #   useDefaultExcludes: true
+  #   fileListPath: "files_linux"
+  #   excludeListPath: "exclude"
+  #   additionalFiles: ["/etc/hosts", "/etc/fstab"]
+
+  # - name: "Generic Files"
+  #   type: "rsync"
+  #   enabled: true
+  #   source: "/data/files/"
+  #   dstRelativePath: "data_files"
