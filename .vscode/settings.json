@@ -12,5 +12,9 @@
             ],
             "url": "./backup_server/config-schema.json"
         }   
+    ],
+    "cSpell.words": [
+        "mkpath",
+        "rootfs"
     ]
 }

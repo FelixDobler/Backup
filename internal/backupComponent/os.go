@@ -1,6 +1,8 @@
 package backupComponent
 
-import "fmt"
+import (
+	"log/slog"
+)
 
 type OSBackup struct {
 	BaseComponentAttributes `yaml:",inline"`
@@ -16,6 +18,7 @@ type OSBackup struct {
 }
 
 func (osBackup OSBackup) PerformBackup(rsyncTargetHost string) error{
-	fmt.Printf("---Performing OS backup---\n")
+	slog.Debug("---Performing OS backup---\n")
+	// TODO implement OS backup logic
 	return nil
 }

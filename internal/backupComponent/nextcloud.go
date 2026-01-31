@@ -2,20 +2,29 @@ package backupComponent
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
+	// "time"
 )
 
+// Maintenance mode command, takes compose file path, nextcloud service name, and "on" or "off"
 var maintenanceModeCommand = "docker compose -f %s exec -u www-data %s php occ maintenance:mode --%s"
+
+// PostgreSQL dump command, takes compose file path and database service name
 var nextcloudDBDumpCommand = "docker compose -f %s exec %s pg_dump nextcloud -h localhost -U nextcloud"
+
+// Rsync data dir command, takes source path, rsync target host, and destination relative path
 var rsyncNextcloudDataDirCommand = "rsync -ax --delete --mkpath %s %s%s"
-var rsyncNextcloudDBDumpCommand = "rsync -ax --delete --mkpath %s %s%s/postgres/nextcloud-sqlbkp.bak"
+
+// Rsync db command, takes source path, rsync target host, and destination relative path prefix
+var rsyncNextcloudDBDumpCommand = "rsync -avx --mkpath %s %s%s"
+
+// Destination path suffix for Nextcloud database dump on rsync target host
+var rsyncDbDstPathComponent = "postgres/"
 
 type NextcloudBackup struct {
 	BaseComponentAttributes     `yaml:",inline"`
@@ -31,13 +40,11 @@ func (ncBackup NextcloudBackup) PerformBackup(rsyncTargetHost string) error {
 	var err error
 
 	if err = ncBackup.checkPrerequisites(); err != nil {
-		slog.Error("Prerequisite check failed", "error", err.Error())
-		return err
+		return fmt.Errorf("Prerequisite check failed: %w", err)
 	}
 
 	if err = ncBackup.setNextcloudMaintenanceMode(true); err != nil {
-		slog.Error("Can't freeze nextcloud activity before backup", "error", err.Error())
-		return err
+		return fmt.Errorf("Can't freeze nextcloud activity before backup: %w", err)
 	}
 
 	defer ncBackup.cleanupAfterError(err)
@@ -52,8 +59,7 @@ func (ncBackup NextcloudBackup) PerformBackup(rsyncTargetHost string) error {
 	}
 
 	if err = ncBackup.setNextcloudMaintenanceMode(false); err != nil {
-		slog.Error("Error disabling Nextcloud maintenance mode after creating backup", "error", err.Error())
-		return err
+		return fmt.Errorf("Error disabling Nextcloud maintenance mode after creating backup: %w", err)
 	}
 
 	err = transferDbDump(dbDumpFilepath, rsyncTargetHost, ncBackup.DstRelativePath)
@@ -68,16 +74,71 @@ func (ncBackup NextcloudBackup) PerformBackup(rsyncTargetHost string) error {
 	return nil
 }
 
+func (ncBackup NextcloudBackup) performDataDirBackup(rsyncTargetHost string) error {
+	dataSrcPath := filepath.Join(ncBackup.DockerMountDir, "nextcloud/")
+	dataDstPath := filepath.Join(ncBackup.DstRelativePath, "nextcloud/")
+	slog.Info("Transferring Nextcloud data directory", "source", dataSrcPath, "destination", dataDstPath, "host", rsyncTargetHost)
+
+	rsyncDataAppliedCommand := fmt.Sprintf(rsyncNextcloudDataDirCommand, dataSrcPath, rsyncTargetHost, dataDstPath)
+	rsyncDataSplitCommand := strings.Split(rsyncDataAppliedCommand, " ")
+
+	slog.Debug("Running command", "command", rsyncDataAppliedCommand)
+
+	_, err := exec.Command(rsyncDataSplitCommand[0], rsyncDataSplitCommand[1:]...).Output()
+	if err != nil {
+		return AppendExecErrStderr("Error transferring Nextcloud data directory", err, "")
+	}
+	return nil
+}
+
+func (ncBackup NextcloudBackup) createDbDump() (string, error) {
+	// date := time.Now().UTC().Format("2006-01-02")
+	// dbDumpFilename := fmt.Sprintf("nextcloud-sqlbkp-%s.bak", date)
+	dbDumpFilename := "nextcloud-sqlbkp.bak"
+	dbDumpFilepath := filepath.Join(ncBackup.TmpBackupDir, dbDumpFilename)
+
+	appliedFullCommand := fmt.Sprintf(nextcloudDBDumpCommand, ncBackup.ComposeSpecificationPath, ncBackup.ComposeDatabaseServiceName)
+	splitFullCommand := strings.Split(appliedFullCommand, " ")
+	command := splitFullCommand[0]
+	splitArgs := splitFullCommand[1:]
+
+	cmd := exec.Command(command, splitArgs...)
+
+	var err error
+	fileDBDump, err := os.Create(dbDumpFilepath)
+	if err != nil {
+		return "", fmt.Errorf("Error creating Nextcloud DB dump file in tmp directory: %w", err)
+	}
+	defer fileDBDump.Close()
+
+	var stderr bytes.Buffer
+
+	// Specify output file with pg_dump
+	cmd.Stdout = fileDBDump
+	cmd.Stderr = &stderr
+	slog.Info("Creating Nextcloud DB dump...", "dbDumpFilepath", dbDumpFilepath)
+
+	slog.Debug("Running command", "command", appliedFullCommand)
+	err = cmd.Run()
+	if err != nil {
+		return "", AppendExecErrStderr("Error creating Nextcloud DB dump", err, stderr.String())
+	}
+
+	slog.Debug("Created Nextcloud DB dump", "dbDumpFilepath", dbDumpFilepath)
+	return dbDumpFilepath, nil
+}
+
 func transferDbDump(dbDumpFilepath string, rsyncTargetHost string, dstRelativePath string) error {
-	dumpDstPath := filepath.Join(dstRelativePath, "postgres", "nextcloud-sqlbkp.bak")
-	rsyncDBDumpAppliedCommand := fmt.Sprintf(rsyncNextcloudDBDumpCommand, dbDumpFilepath, rsyncTargetHost, dumpDstPath)
+	fullDstPath := filepath.Join(dstRelativePath, rsyncDbDstPathComponent) + "/"
+	rsyncDBDumpAppliedCommand := fmt.Sprintf(rsyncNextcloudDBDumpCommand, dbDumpFilepath, rsyncTargetHost, fullDstPath)
 	rsyncDBDumpSplitCommand := strings.Split(rsyncDBDumpAppliedCommand, " ")
 
-	slog.Info("Transferring Nextcloud DB dump", "source", dbDumpFilepath, "destination", dumpDstPath, "host", rsyncTargetHost)
-	_, err := exec.Command(rsyncDBDumpSplitCommand[0], rsyncDBDumpSplitCommand[1:]...).Output()
+	slog.Info("Transferring Nextcloud DB dump", "source", dbDumpFilepath, "destination", fullDstPath, "host", rsyncTargetHost)
+	out, err := exec.Command(rsyncDBDumpSplitCommand[0], rsyncDBDumpSplitCommand[1:]...).Output()
 	if err != nil {
-		return appendErrStderr("Error transferring Nextcloud DB dump", err, "")
+		return AppendExecErrStderr("Error transferring Nextcloud DB dump", err, "")
 	}
+	slog.Debug("Rsync DB dump command output", "output", string(out))
 	return nil
 }
 
@@ -98,85 +159,6 @@ func removeTmpDbDump(dbDumpFilepath string) error {
 	return nil
 }
 
-func (ncBackup NextcloudBackup) checkPrerequisites() error {
-	if err := ensureDirExists(ncBackup.DockerMountDir); err != nil {
-		return fmt.Errorf("Prerequisite check failed: Docker mount dir: %w", err)
-	}
-
-	if existsErr := ensureDirExists(ncBackup.TmpBackupDir); existsErr != nil {
-		if mkdirErr := os.MkdirAll(ncBackup.TmpBackupDir, 0700); mkdirErr != nil {
-			slog.Error("Error creating tmp backup dir", "error", mkdirErr.Error())
-			return mkdirErr
-		}
-		slog.Info("Created tmp backup dir", "tmpBackupDir", ncBackup.TmpBackupDir)
-	} else {
-		fileInfo , err := os.Stat(ncBackup.TmpBackupDir)
-		if err != nil {
-			return fmt.Errorf("Cannot obtain permission info for preexisting tmp backup dir: %w", err)
-		}
-		if fileInfo.Mode().Perm() != 0700 {
-			err := os.Chmod(ncBackup.TmpBackupDir, 0700)
-			if err != nil {
-				return fmt.Errorf("Cannot set restrictive permissions for preexisting tmp backup dir: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-func (ncBackup NextcloudBackup) performDataDirBackup(rsyncTargetHost string) error {
-	dataSrcPath := filepath.Join(ncBackup.DockerMountDir, "nextcloud/")
-	dataDstPath := filepath.Join(ncBackup.DstRelativePath, "nextcloud/")
-	slog.Info("Transferring Nextcloud data directory", "source", dataSrcPath, "destination", dataDstPath, "host", rsyncTargetHost)
-
-	rsyncDataAppliedCommand := fmt.Sprintf(rsyncNextcloudDataDirCommand, dataSrcPath, rsyncTargetHost, dataDstPath)
-	rsyncDataSplitCommand := strings.Split(rsyncDataAppliedCommand, " ")
-
-	slog.Debug("Running command", "command", rsyncDataAppliedCommand)
-
-	_, err := exec.Command(rsyncDataSplitCommand[0], rsyncDataSplitCommand[1:]...).Output()
-	if err != nil {
-		return appendErrStderr("Error transferring Nextcloud data directory", err, "")
-	}
-	return nil
-}
-
-func (ncBackup NextcloudBackup) createDbDump() (string, error) {
-	date := time.Now().UTC().Format("2006-01-02")
-	dbDumpFilename := fmt.Sprintf("nextcloud-sqlbkp-%s.bak", date)
-	dbDumpFilepath := filepath.Join(ncBackup.TmpBackupDir, dbDumpFilename)
-
-	appliedFullCommand := fmt.Sprintf(nextcloudDBDumpCommand, ncBackup.ComposeSpecificationPath, ncBackup.ComposeDatabaseServiceName)
-	splitFullCommand := strings.Split(appliedFullCommand, " ")
-	command := splitFullCommand[0]
-	splitArgs := splitFullCommand[1:]
-
-	cmd := exec.Command(command, splitArgs...)
-
-	var err error
-	fileDBDump, err := os.Create(dbDumpFilepath)
-	if err != nil {
-		return "", fmt.Errorf("Error creating Nextcloud DB dump file in tmp directory: %w", err)
-	}
-	defer fileDBDump.Close()
-
-	var stderr bytes.Buffer
-	
-
-	cmd.Stdout = fileDBDump
-	cmd.Stderr = &stderr
-	slog.Info("Creating Nextcloud DB dump...", "dbDumpFilepath", dbDumpFilepath)
-
-	slog.Debug("Running command", "command", appliedFullCommand)
-	err = cmd.Run()
-	if err != nil {
-		return "", appendErrStderr("Error creating Nextcloud DB dump", err, stderr.String())
-	}
-
-	slog.Debug("Created Nextcloud DB dump", "dbDumpFilepath", dbDumpFilepath)
-	return dbDumpFilepath, nil
-}
-
 func (ncBackup NextcloudBackup) setNextcloudMaintenanceMode(enable bool) error {
 	var flag string
 
@@ -193,10 +175,9 @@ func (ncBackup NextcloudBackup) setNextcloudMaintenanceMode(enable bool) error {
 
 	slog.Debug("Running command", "command", fullAppliedCommand)
 
-	cmd := exec.Command(fullSplitCommand[0], fullSplitCommand[1:]...)
-	_, err := cmd.Output()
+	_, err := exec.Command(fullSplitCommand[0], fullSplitCommand[1:]...).Output()
 	if err != nil {
-		return appendErrStderr(fmt.Sprintf("Error setting Nextcloud maintenance mode %s", flag), err, "")
+		return AppendExecErrStderr(fmt.Sprintf("Error setting Nextcloud maintenance mode %s", flag), err, "")
 	}
 
 	return nil
@@ -215,9 +196,37 @@ func (ncBackup NextcloudBackup) cleanupAfterError(err error) {
 	}
 }
 
+func (ncBackup NextcloudBackup) checkPrerequisites() error {
+	var requiredTmpDirPerm os.FileMode = 0700
+
+	if err := ensureDirExists(ncBackup.DockerMountDir); err != nil {
+		return fmt.Errorf("Docker mount dir doesn't exist: %w", err)
+	}
+
+	if existsErr := ensureDirExists(ncBackup.TmpBackupDir); existsErr != nil {
+		if mkdirErr := os.MkdirAll(ncBackup.TmpBackupDir, requiredTmpDirPerm); mkdirErr != nil {
+			return fmt.Errorf("Cannot create tmp backup dir: %w", mkdirErr)
+		}
+		slog.Info("Created tmp backup dir", "tmpBackupDir", ncBackup.TmpBackupDir)
+	} else {
+		entries, err := os.ReadDir(ncBackup.TmpBackupDir)
+		if err != nil {
+			return fmt.Errorf("Cannot read tmp backup dir to check if empty: %w", err)
+		}
+		if len(entries) > 0 {
+			return fmt.Errorf("Tmp backup dir is not empty: %s", ncBackup.TmpBackupDir)
+		}
+
+		err = ensureTmpDirPerms(ncBackup.TmpBackupDir, requiredTmpDirPerm)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func ensureDirExists(dirPath string) error {
 	if dirPath == "" {
-		return fmt.Errorf("directory path is empty")
+		return fmt.Errorf("Directory path is empty")
 	}
 
 	fileInfo, err := os.Stat(dirPath)
@@ -229,29 +238,17 @@ func ensureDirExists(dirPath string) error {
 	}
 	return nil
 }
-
-// Appends the `err` to `message`. If `err` is of type exec.ExitError and contains stderr output,
-// the stderr output is also appended to the returned error.
-// If stderr is specified, it is used instead of extracting it from err.
-func appendErrStderr(message string, err error, stderr string) error {
-	fallbackErr := fmt.Errorf("%s: %w", message, err)
-
-	// check if error is of type exitError so we can access the stderr
-	exitErr := &exec.ExitError{}
-	if !errors.As(err, &exitErr) {
-		return fallbackErr
+func ensureTmpDirPerms(tmpBackupDir string, requiredTmpDirPerm os.FileMode) error {
+	fileInfo, err := os.Stat(tmpBackupDir)
+	if err != nil {
+		return fmt.Errorf("Cannot obtain permission info for preexisting tmp backup dir: %w", err)
 	}
-	
-	var outputStderr string
-	if stderr != "" {
-		outputStderr = stderr
-	} else {
-		if exitErr.Stderr != nil {
-			outputStderr = string(exitErr.Stderr)
-		} else {
-			return fallbackErr
+	if fileInfo.Mode().Perm() != requiredTmpDirPerm {
+		slog.Warn("Setting restrictive permissions for preexisting tmp backup dir", "tmpBackupDir", tmpBackupDir, "oldPerm", fileInfo.Mode().Perm())
+		err := os.Chmod(tmpBackupDir, requiredTmpDirPerm)
+		if err != nil {
+			return fmt.Errorf("Cannot set restrictive permissions for preexisting tmp backup dir: %w", err)
 		}
 	}
-
-	return fmt.Errorf("%s, %w, stderr:\n%s", message, err, outputStderr)
+	return nil
 }

@@ -33,8 +33,9 @@ RUN touch /nextcloud-data/nextcloud/dummyfile.txt
 
 RUN mkdir -p /backupDirOnRemote
 
-COPY --exclude=docker . .
+COPY . .
 COPY docker .
 RUN go build -v -o /usr/local/bin/app cmd/client/main.go
 
+RUN chmod +x start_mock_nextcloud.sh
 CMD ["./start_mock_nextcloud.sh"]

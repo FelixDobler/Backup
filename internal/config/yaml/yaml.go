@@ -36,7 +36,7 @@ func extractComponent(node *yaml.Node) (backupComponents.BackupComponent, error)
 
 	componentObject := constructor()
 	slog.Debug("Parsing component", "componentType", base.Type, "componentName", base.Name)
-
+	
 	if err := node.Decode(componentObject); err != nil {
 		return nil, fmt.Errorf("can't decode node into struct of type %T: %w", componentObject, err)
 	}

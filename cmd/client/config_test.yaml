@@ -1,5 +1,5 @@
 logDir: "/root/backup_logs"
-email: "felix.dobler.fd@gmail.com"
+email: "felix@doblerones.de"
 # rsyncTargetHost: "test123:"
 rsyncTargetHost: ""
 components:
@@ -24,8 +24,11 @@ components:
   #   excludeListPath: "exclude"
   #   additionalFiles: ["/etc/hosts", "/etc/fstab"]
 
-  # - name: "Generic Files"
-  #   type: "rsync"
-  #   enabled: true
-  #   source: "/data/files/"
-  #   dstRelativePath: "data_files"
+  - name: "Generic Files"
+    type: "rsync"
+    enabled: true
+    source: "/rsyncSourceDir/"
+    dstRelativePath: "/backupDirOnRemote/rsyncGeneric"
+    useDefaultArgs: true
+    # rsyncArgs: ["-avx", "--mkpath", "--delete"]
+    # rsyncArgs: ["--nonexistentoption"]
