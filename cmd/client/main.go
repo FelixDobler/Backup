@@ -4,26 +4,19 @@ import (
 	"fedob/backup/internal/config/yaml"
 	"fmt"
 	"os"
-	"strings"
 
-	// "fmt"
 	"fedob/backup/internal/alert"
+	"fedob/backup/internal/config"
 	"fedob/backup/internal/logging"
 	"log/slog"
 
-	// TODO REMOVE IN PROD
-	// "github.com/joho/godotenv"
-	"reflect"
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
-	// err := godotenv.Load(".env")
-	// if err != nil {
-		// panic("Error loading .env file")
-	// }
 	logging.Init()
 	
-	var configConnector = yaml.NewYAMLConfigInterface("cmd/client/config_test.yaml")
+	var configConnector = yaml.NewYAMLConfigInterface("/config.yaml")
 
 	slog.Info("Loading client config", "configConnector", configConnector)
 	clientConfig, err := configConnector.LoadConfig()
@@ -32,28 +25,24 @@ func main() {
 		return
 	}
 
+	slog.Debug("Config", "clientConfig", clientConfig)
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	config.RegisterCustomValidations(validate)
+
+	if err := validate.Struct(clientConfig); err != nil {
+		slog.Error("Config validation error", "error", err)
+		panic("stop")
+	}
+	slog.Debug("YAML config validation succeeded")
 	slog.Debug("Finished loading config")
 
-	mailNotifier := alert.MailAlertNotifier{
-		Host: os.Getenv("MAIL_HOST"),
-		Port: os.Getenv("MAIL_PORT"),
-		Username: os.Getenv("MAIL_USERNAME"),
-		Password: os.Getenv("MAIL_PASSWORD"),
-		From: os.Getenv("MAIL_FROM"),
-		To: clientConfig.Email,
-	}
-	// ensure the values of mailNotifier aren't empty
-	fields := reflect.VisibleFields(reflect.TypeOf(mailNotifier))
-	for _, field := range fields {
-		value := reflect.ValueOf(mailNotifier).FieldByName(field.Name).String()
-		if value == "" {
-			slog.Error("Mail notifier field is empty", "field", field.Name)
-			return
-		}
-	}
+	// FIXME remove injection of MAIL_PASSWORD here
+	mailNotifier := clientConfig.Mail
+	mailNotifier.Password = os.Getenv("MAIL_PASSWORD")
+	notifier := alert.MailAlertNotifier(mailNotifier)
 
-	// TODO collect individual error messages instead of combining them here
-	var errorMsgBuffer strings.Builder
+	var alertMessages []alert.AlertMessage
 	for _, component := range clientConfig.BackupComponents {
 		if !component.IsEnabled() {
 			slog.Info("Skipping disabled component", "componentName", component.GetName())
@@ -64,14 +53,17 @@ func main() {
 		err := component.PerformBackup(clientConfig.RsyncTargetHost)
 		if err != nil {
 			slog.Error("Error performing backup for component", "component", component.GetName(), "error", err.Error())
-			errorMsgBuffer.WriteString(fmt.Sprintf("Error performing backup for component %s: %s\n\n", component.GetName(), err.Error()))
+			alertMessages = append(alertMessages, alert.AlertMessage{
+				Subject: fmt.Sprintf("Error performing backup for component %s", component.GetName()),
+				Body:    err.Error(),
+			})
 		} else {
 			slog.Info("Successfully completed backup for component", "component", component.GetName(), "type", component.GetType())
 		}
 	}
-	if errorMsgBuffer.Len() != 0 {
+	if len(alertMessages) > 0 && os.Getenv("SUPPRESS_ALERTS") != "true" {
 		slog.Info("Sending alert email for backup errors")
-		err :=mailNotifier.SendAlert("Backup Error", errorMsgBuffer.String())
+		err := notifier.SendAlert(alertMessages)
 		if err != nil {
 			slog.Error("Failed to send alert email", "error", err)
 		}

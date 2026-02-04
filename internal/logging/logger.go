@@ -9,7 +9,7 @@ import (
 func Init() {
 	w := os.Stdout
 	logger := slog.New(tint.NewHandler(w, &tint.Options{
-		Level:       slog.LevelInfo,
+		Level:       slog.LevelDebug,
 	}))
 	slog.SetDefault(logger)
 }

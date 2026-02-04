@@ -87,7 +87,3 @@ func (y YAMLConfigInterface) LoadConfig() (config.ClientConfig, error) {
 	clientConfig.BackupComponents = parsedComponents
 	return clientConfig, nil
 }
-
-func (y YAMLConfigInterface) SaveConfig(config config.ClientConfig) error {
-	return errors.New("Yaml SaveConfig not implemented")
-}

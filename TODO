@@ -1,5 +1,10 @@
+TODO: support for config flag to stream backup operation output (exec stdout)
+TODO: global config dir initializer in /etc/fdbackup or fedobackup
+    os.go bootstrapDefaultArtifacts
+
 TODO: use validation library for config data
+    TODO: detailed/custom error messages
+TODO: proper error types for backup failures
 TODO: find alternative for deprecated yaml lib
-TODO: os backup component
 
 TODO: test config command

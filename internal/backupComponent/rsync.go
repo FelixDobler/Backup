@@ -6,9 +6,9 @@ import (
 )
 
 type RsyncBackup struct {
-	BaseComponentAttributes `yaml:",inline"`
-	Source                  string   `yaml:"source"`
-	DstRelativePath         string   `yaml:"dstRelativePath"`
+	BaseComponentAttributes `yaml:",inline" validate:"required"`
+	Source                  string   `yaml:"source" validate:"required,file|dir"`
+	DstRelativePath         string   `yaml:"dstRelativePath" validate:"required,filepath|dirpath"`
 	UseDefaultArgs          bool     `yaml:"useDefaultArgs"`
 	RsyncArgs               []string `yaml:"rsyncArgs"` // Further rsync options, e.g. ["-a", "--delete"]
 }

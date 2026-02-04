@@ -3,6 +3,7 @@ package backupComponent
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -15,8 +16,8 @@ type BackupComponent interface {
 }
 
 type BaseComponentAttributes struct {
-	Name    string `yaml:"name"`
-	Type    string `yaml:"type"`
+	Name    string `yaml:"name" validate:"required"`
+	Type    string `yaml:"type" validate:"required"`
 	Enabled bool   `yaml:"enabled"`
 }
 
@@ -39,6 +40,21 @@ const (
 	NextcloudBackupType BackupType = "nextcloud"
 	RsyncBackupType     BackupType = "rsync"
 )
+
+func dirExists(dirPath string) error {
+	if dirPath == "" {
+		return fmt.Errorf("Directory path is empty")
+	}
+
+	fileInfo, err := os.Stat(dirPath)
+	if err != nil {
+		return fmt.Errorf("Failed to check directory: %w", err)
+	}
+	if !fileInfo.IsDir() {
+		return fmt.Errorf("%s is not a directory", dirPath)
+	}
+	return nil
+}
 
 // Appends `err` to `message`. If `err` is of type exec.ExitError and contains stderr output,
 // the stderr output is also appended to the returned error.

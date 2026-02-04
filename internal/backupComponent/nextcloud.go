@@ -27,13 +27,13 @@ var rsyncNextcloudDBDumpCommand = "rsync -avx --mkpath %s %s%s"
 var rsyncDbDstPathComponent = "postgres/"
 
 type NextcloudBackup struct {
-	BaseComponentAttributes     `yaml:",inline"`
-	ComposeSpecificationPath    string `yaml:"composeSpecificationPath"`
-	ComposeNextcloudServiceName string `yaml:"composeNextcloudServiceName"`
-	ComposeDatabaseServiceName  string `yaml:"composeDatabaseServiceName"`
-	TmpBackupDir                string `yaml:"tmpBackupDir"`
-	DockerMountDir              string `yaml:"dockerMountDir"`
-	DstRelativePath             string `yaml:"dstRelativePath"`
+	BaseComponentAttributes     `yaml:",inline" validate:"required"`
+	ComposeSpecificationPath    string `yaml:"composeSpecificationPath" validate:"required,file"`
+	ComposeNextcloudServiceName string `yaml:"composeNextcloudServiceName" validate:"required|hostname"`
+	ComposeDatabaseServiceName  string `yaml:"composeDatabaseServiceName" validate:"required|hostname"`
+	TmpBackupDir                string `yaml:"tmpBackupDir" validate:"required,dirpath"`
+	DockerMountDir              string `yaml:"dockerMountDir" validate:"required,dir"`
+	DstRelativePath             string `yaml:"dstRelativePath" validate:"required,filepath|dirpath"`
 }
 
 func (ncBackup NextcloudBackup) PerformBackup(rsyncTargetHost string) error {
@@ -199,11 +199,11 @@ func (ncBackup NextcloudBackup) cleanupAfterError(err error) {
 func (ncBackup NextcloudBackup) checkPrerequisites() error {
 	var requiredTmpDirPerm os.FileMode = 0700
 
-	if err := ensureDirExists(ncBackup.DockerMountDir); err != nil {
+	if err := dirExists(ncBackup.DockerMountDir); err != nil {
 		return fmt.Errorf("Docker mount dir doesn't exist: %w", err)
 	}
 
-	if existsErr := ensureDirExists(ncBackup.TmpBackupDir); existsErr != nil {
+	if existsErr := dirExists(ncBackup.TmpBackupDir); existsErr != nil {
 		if mkdirErr := os.MkdirAll(ncBackup.TmpBackupDir, requiredTmpDirPerm); mkdirErr != nil {
 			return fmt.Errorf("Cannot create tmp backup dir: %w", mkdirErr)
 		}
@@ -221,20 +221,6 @@ func (ncBackup NextcloudBackup) checkPrerequisites() error {
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-func ensureDirExists(dirPath string) error {
-	if dirPath == "" {
-		return fmt.Errorf("Directory path is empty")
-	}
-
-	fileInfo, err := os.Stat(dirPath)
-	if err != nil {
-		return err
-	}
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("%s is not a directory", dirPath)
 	}
 	return nil
 }

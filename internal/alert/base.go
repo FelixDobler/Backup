@@ -1,6 +1,11 @@
 package alert
 
+type AlertMessage struct {
+	Subject string
+	Body    string
+}
+
 type AlertNotifier interface {
-	SendAlert(subject string, message string) error
-	// TODO SendTestAlert() error
+	SendAlert(messages []AlertMessage) error
+	SendTestAlert() error
 }
