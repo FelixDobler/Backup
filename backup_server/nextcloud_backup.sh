@@ -8,10 +8,9 @@ read_config () {
 
 # load alert email address and the location to save the backup to
 alert_email=$(read_config ".email")
-syncDir=$(read_config ".syncDir")
-backupDir=$(read_config ".backupDir")
 
 # load the nextcloud backup directory and main directory from the config file
+# for usage with rsync remote host, set it in config using normal rsync format
 nextcloudBackupDir=$(read_config ".nextcloud.backupDir")
 nextcloudMainDir=$(read_config ".nextcloud.dockerMountDir")
 
@@ -21,16 +20,21 @@ trap 'printf "Subject: BACKUP ALERT\n\nError during nextcloud backup\n$(date)" |
 # enable maintenance mode for data integrity
 docker exec -u www-data nextcloud-app-1 php occ maintenance:mode --on
 
-# copy nextcloud data to live dir
-rsync -Aax --delete $nextcloudMainDir/nextcloud/ $nextcloudBackupDir/nextcloud/
+# create database backup
+pgTempDir=$(mktemp -d)
+docker exec nextcloud-db-1 pg_dump nextcloud -h localhost -U nextcloud > $pgTempDir/nextcloud-sqlbkp.bak
 
-# create database backup and copy it to live dir
-date=$(date +"%Y-%m-%d")
-docker exec nextcloud-db-1 pg_dump nextcloud -h localhost -U nextcloud -f nextcloud-sqlbkp_${date}.bak
-docker cp nextcloud-db-1:/nextcloud-sqlbkp_${date}.bak $nextcloudBackupDir/postgres/
-        # indicate completion of backup to the alert manager
-        touch $backupDir/odroidm1_lastBackup
-docker exec nextcloud-db-1 rm nextcloud-sqlbkp_${date}.bak
+# copy sql backup and nextcloud data to live dir on target host
+# target structure on host
+# - rrsyncRootLocation
+#   |- nextcloud-sqlbkp.bak
+#   |- nextcloud
+#      |- AUTHORS
+#      |- ....
+rsync -aAx --delete --verbose --stats $pgTempDir/nextcloud-sqlbkp.bak $nextcloudMainDir/nextcloud $nextcloudBackupDir/
+
+# cleanup tmp dir
+rm -r $pgTempDir
 
 # disable maintenance mode
 docker exec -u www-data nextcloud-app-1 php occ maintenance:mode --off
