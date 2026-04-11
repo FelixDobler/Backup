@@ -23,6 +23,5 @@ touch /rsyncSourceDir/subdir/testfile2.txt
 # OS
 mkdir -p /etc/fdbackup/defaults
 ls -la /
-find /etc
 echo "---------------------------------------"
 app

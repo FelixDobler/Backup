@@ -1,34 +1,43 @@
 logDir: "/root/backup_logs"
-email: "felix@doblerones.de"
-# rsyncTargetHost: "test123:"
+# email: "felix@doblerones.de"
 rsyncTargetHost: ""
+# rsyncTargetHost: ":"
+mail:
+  host: mail.doblerones.de
+  port: 465
+  username: backup_goclient_test
+  password: verysecurepassword123!@#
+  from: "backup@doblerones.de"
+  to: "felix@doblerones.de"
 components:
-  - name: "nextcloud"
-    type: "nextcloud"
-    enabled: true
-    composeSpecificationPath: "docker-compose.yaml"
-    composeNextcloudServiceName: "nextcloud"
-    composeDatabaseServiceName: "postgres"
-    tmpBackupDir: "/backups/tmp/nextcloud"
-    dockerMountDir: "/nextcloud-data"
-    dstRelativePath: "/backupDirOnRemote/nextcloud"
+  # - name: "nextcloud"
+  #   type: "nextcloud"
+  #   enabled: false
+  #   composeSpecificationPath: "docker-compose.yaml"
+  #   composeNextcloudServiceName: "nextcloud"
+  #   composeDatabaseServiceName: "postgres"
+  #   tmpBackupDir: "/backups/tmp/nextcloud/"
+  #   dockerMountDir: "/nextcloud-data/"
+  #   dstRelativePath: "/backupDirOnRemote/nextcloud"
 
-  # - name: "DebianOS"
-  #   type: "os"
-  #   enabled: true
-  #   source: "/"
-  #   dstRelativePath: "rootfs"
-  #   useDefaultFiles: true
-  #   useDefaultExcludes: true
-  #   fileListPath: "files_linux"
-  #   excludeListPath: "exclude"
-  #   additionalFiles: ["/etc/hosts", "/etc/fstab"]
-
-  - name: "Generic Files"
-    type: "rsync"
+  - name: "DebianOS"
+    type: "os"
     enabled: true
-    source: "/rsyncSourceDir/"
-    dstRelativePath: "/backupDirOnRemote/rsyncGeneric"
-    useDefaultArgs: true
-    # rsyncArgs: ["-avx", "--mkpath", "--delete"]
-    # rsyncArgs: ["--nonexistentoption"]
+    # source: "/rsyncSourceDir/"
+    source: "/"
+    dstRelativePath: "/backupDirOnRemote/rootfs"
+    useDefaultFiles: true
+    useDefaultExcludes: true
+    # fileListPath: "files_linux"
+    # excludeListPath: "exclude"
+    additionalSources: ["/etc/fdbackup"]
+    # additionalSources: ["/homedoesnotexist"]
+
+  # - name: "Generic Files"
+  #   type: "rsync"
+  #   enabled: false
+  #   source: "/rsyncSourceDir/"
+  #   dstRelativePath: "/backupDirOnRemote/rsyncGeneric"
+  #   useDefaultArgs: true
+  #   # rsyncArgs: ["-avx", "--mkpath", "--delete"]
+  #   rsyncArgs: ["--nonexistentoption"]

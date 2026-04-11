@@ -20,7 +20,14 @@ type OSBackup struct {
 	AdditionalSources       []string `yaml:"additionalSources" validate:"omitempty,dive,file|dir"`
 }
 
+func (osBackup *OSBackup) SetDefaults() {
+	slog.Warn("OS set defaults called")
+    osBackup.BaseComponentAttributes.SetDefaults()
+    // os specific defaults here
+}
+
 // Include default artifacts in the binary
+//
 //go:embed os_artifacts/*
 var default_artifacts embed.FS
 
@@ -36,13 +43,14 @@ func (osBackup OSBackup) PerformBackup(rsyncTargetHost string) error {
 	command := "rsync"
 	completeArgs := osBackup.buildCommandArgs(rsyncTargetHost)
 	slog.Debug("Executing rsync command", "command", command, "args", completeArgs)
-	_, err = exec.Command(command, completeArgs...).Output()
+	cmd := exec.Command(command, completeArgs...)
+
+	_, err = osBackup.ExecuteCommand(cmd)
+
 	if err != nil {
 		slog.Error("Error executing rsync command", "cmd", command, "args", completeArgs)
-		return AppendExecErrStderr("Error executing rsync command", err, "")
+		return err
 	}
-	// TODO stream output if desired
-
 	return nil
 }
 
@@ -113,6 +121,6 @@ func (osBackup OSBackup) buildCommandArgs(rsyncTargetHost string) []string {
 	for _, additionalSource := range osBackup.AdditionalSources {
 		args = append(args, additionalSource)
 	}
-	args = append(args, rsyncTargetHost + osBackup.DstRelativePath)
+	args = append(args, rsyncTargetHost+osBackup.DstRelativePath)
 	return args
 }

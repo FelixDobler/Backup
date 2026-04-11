@@ -35,6 +35,10 @@ func extractComponent(node *yaml.Node) (backupComponents.BackupComponent, error)
 	}
 
 	componentObject := constructor()
+	componentObject.SetDefaults()
+
+	slog.Warn("component default output", "output", componentObject)
+
 	slog.Debug("Parsing component", "componentType", base.Type, "componentName", base.Name)
 	
 	if err := node.Decode(componentObject); err != nil {

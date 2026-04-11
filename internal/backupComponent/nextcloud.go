@@ -84,7 +84,9 @@ func (ncBackup NextcloudBackup) performDataDirBackup(rsyncTargetHost string) err
 
 	slog.Debug("Running command", "command", rsyncDataAppliedCommand)
 
-	_, err := exec.Command(rsyncDataSplitCommand[0], rsyncDataSplitCommand[1:]...).Output()
+	cmd := exec.Command(rsyncDataSplitCommand[0], rsyncDataSplitCommand[1:]...)
+	_, err := ncBackup.ExecuteCommand(cmd)
+
 	if err != nil {
 		return AppendExecErrStderr("Error transferring Nextcloud data directory", err, "")
 	}
